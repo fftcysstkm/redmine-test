@@ -1,0 +1,33 @@
+version: '3.1'
+
+services:
+
+  redmine:
+    image: redmine:4.2.8
+    ports:
+      - 3000:3000
+    restart: always
+    volumes:
+      - ./redmine/plugins:/usr/src/redmine/plugins
+      - ./redmine/backup:/usr/src/redmine/files
+    environment:
+      REDMINE_DB_MYSQL: db
+      REDMINE_DB_PASSWORD: redmine
+    depends_on:
+      - db
+
+  db:
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+    ports:
+      - 3306:3306
+    platform: linux/amd64
+    restart: always
+    volumes:
+      - ./mysql/backup:/var/backup
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: redmine
+      MYSQL_DATABASE: redmine
+      TZ: Asia/Tokyo

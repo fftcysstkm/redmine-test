@@ -4,6 +4,7 @@ services:
 
   redmine:
     image: redmine:4.2.8
+    container_name: redmine-4.2.8
     ports:
       - 3000:3000
     restart: always
@@ -20,6 +21,7 @@ services:
     build:
       context: ./mysql
       dockerfile: Dockerfile
+    container_name: redmine-db
     ports:
       - 3306:3306
     platform: linux/amd64
@@ -31,3 +33,18 @@ services:
       MYSQL_ROOT_PASSWORD: redmine
       MYSQL_DATABASE: redmine
       TZ: Asia/Tokyo
+
+  periodic-backup:
+    build: ./periodic-backup
+    container_name: database-backup
+    platform: linux/amd64
+    environment:
+      MYSQL_CONTAINER_NAME: redmine-db
+      MYSQL_DATABASE: redmine
+      MYSQL_ROOT_PASSWORD: redmine
+    volumes:
+      - ./periodic-backup/script:/opt/mysql/backup
+    command: crond -f -d 8
+    restart: always
+    depends_on:
+      - db

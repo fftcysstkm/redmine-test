@@ -43,7 +43,7 @@ services:
       MYSQL_DATABASE: redmine
       MYSQL_ROOT_PASSWORD: redmine
     volumes:
-      - ./periodic-backup/script:/opt/mysql/backup
+      - ./periodic-backup/backup:/opt/mysql/backup
     command: crond -f -d 8
     restart: always
     depends_on:

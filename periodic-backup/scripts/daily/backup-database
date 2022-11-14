@@ -1,9 +1,10 @@
 #!/bin/sh
 
 BACKUP_FOLDER=/opt/mysql/backup
-NOW=$(date '+%d')
+NOW=$(date '+%Y%m%d%H%M')
 
-GZIP=tar
+GZIP=$(which gzip)
+MYSQLDUMP=$(which mysqldump)
 
 ### MySQL Server Login info ###
 MDB=redmine
@@ -14,4 +15,4 @@ MUSER=root
 [ ! -d "$BACKUP_FOLDER" ] && mkdir --parents $BACKUP_FOLDER
 
 FILE=${BACKUP_FOLDER}/backup-${NOW}.sql.gz
-mysqldump -h $MHOST -u $MUSER -p${MPASS} --databases $MDB | $GZIP -9 > $FILE
+$MYSQLDUMP -h $MHOST -u $MUSER -p${MPASS} --databases $MDB | $GZIP -9 > $FILE

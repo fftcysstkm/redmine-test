@@ -1,7 +1,6 @@
 - [Dockerコンテナで構築したRedmineの概要](#dockerコンテナで構築したredmineの概要)
 - [Redmine環境をDockerコンテナで構築する](#redmine環境をdockerコンテナで構築する)
 - [サブURLでRedmineにアクセス可能にする](#サブurlでredmineにアクセス可能にする)
-  - [Redmineコンテナがサブディレクトリで動作する設定をする](#redmineコンテナがサブディレクトリで動作する設定をする)
 - [nginxのリバースプロキシでリクエストを振り分ける設定をする](#nginxのリバースプロキシでリクエストを振り分ける設定をする)
 - [バックアップのために必要なデータをホストとマウントする](#バックアップのために必要なデータをホストとマウントする)
     - [Redmineの添付ファイル(files/)をホストとマウントする](#redmineの添付ファイルfilesをホストとマウントする)
@@ -11,7 +10,7 @@
 - [バックアップファイルからRedmineをリストアする](#バックアップファイルからredmineをリストアする)
 - [今後のTODO](#今後のtodo)
 # Dockerコンテナで構築したRedmineの概要
-- RedmineのDokcerコンテナをローカルに構築した（会社の拠点間VPN内で動かす想定)。
+- RedmineのDokcerコンテナをローカルに構築した（今後、会社の拠点間VPN内の物理サーバで動かす想定)。
   - nginx 1.23.2(リバースプロキシ)
   - Redmine 4.2.8(本体)
   - MySQL 5.7(Redmineのデータ格納)
@@ -26,7 +25,7 @@
 
 # Redmine環境をDockerコンテナで構築する
 Redmine環境を、1.nginx、2.Redmine、3.MySQL、4.SQLダンプ用のDokcerコンテナで構築した。まず、nginxでクライアントからリクエストを受付ける。nginxはバックエンドのRedmineアプリに通信をリバースプロキシで振り分ける（今後、他のアプリもバーチャルホストに追加可能にするため）。RedmineはチケットをMySQLに格納する。MySQLのダンプは、ダンプ専用のコンテナで行う。ダンプ用のコンテナを作成したのは、MySQLのコンテナ内で通常のcronを実行させようとしたが、うまく動作しなかったため。<br>
-docker-compose.yml。
+docker-compose.yml:
 ```yaml
 version: '3.1'
 
@@ -94,9 +93,7 @@ services:
 ```
 
 # サブURLでRedmineにアクセス可能にする
-Redmineのアクセス時URLは、`http:/ホスト名/サブディレクトリ/`となるように、Redmineコンテナとnginxのリバースプロキシ設定をした。今回の例では、`http://localhost/redmine/`でRedmineにアクセスできる。この設定を行わないと、CSSやJavaScriptがロードされなかったり、各種リンクのURLから`/サブディレクトリ/`（今回なら`/redmine/`）が削除され404になってしまったりする。
-## Redmineコンテナがサブディレクトリで動作する設定をする
-RedmineがサブディレクトリでHTTP送受信をできるように、Railsの環境変数と設定ファイルのconfig.ruを編集する。
+Redmineのアクセス時URLは、`http:/ホスト名/サブディレクトリ/`となるように、Redmineコンテナ内のRailsの環境変数と設定ファイルconfig.ruを編集した。今回の例では、`http://localhost/redmine/`でRedmineにアクセスできる。この設定を行わないと、CSSやJavaScriptがロードされなかったり、各種リンクのURLから`/サブディレクトリ/`（今回なら`/redmine/`）が削除され404になってしまったりする。<br>
 手順はRedmine[公式](https://www.redmine.org/projects/redmine/wiki/HowTo_Install_Redmine_in_a_sub-URI)を考にした。
 1. Redmineのコンテナにコンテキストパスを設定する。Railsには`ENV[“RAILS_RELATIVE_URL_ROOT”] `という環境変数があり、ここにパスを設定するとコンテキストパスを変更できる模様。<br>
 RedmineのDockerfile抜粋:
@@ -141,7 +138,7 @@ server {
 
 # バックアップのために必要なデータをホストとマウントする
 ### Redmineの添付ファイル(files/)をホストとマウントする
-現状はRedmineの`/files`ディレクトリをホストのディレクトリとマウントしているだけ(`docker-compose.yml`のRedmineコンテナの`vlumes`参照)。TODOとして3日分くらいバックアップして、古いファイルは削除する。
+現状はRedmineの`/files`ディレクトリをホストのディレクトリとマウントしているだけ(`docker-compose.yml`のRedmineコンテナの`vlumes`参照)。TODO:3日分くらいバックアップして、古いファイルは削除する。
 ### RedmineのMySQL格納データをマウントディレクトリにダンプする
 Alpine LinuxベースのMySQLダンプ専用のコンテナを作り、毎日1回ダンプファイルを圧縮し、マウントディレクトリに格納する。Alpine Linuxのコンテナイメージには、MySQLをダンプ・圧縮するシェルスクリプトをホストからコピーしておく。また、タイムゾーンを日本にし、MySQL接続クライアントをインストールする。[こちら](https://ricardolsmendes.medium.com/mysql-mariadb-with-scheduled-backup-jobs-running-in-docker-1956e9892e78)参考にさせてもらった。当初MySQLコンテナ内でcronを実行しようとしていたが、なぜかうまく動作せず、このブログにたどり着いた。ブログによれば、1コンテナ1ソフトウェアの原則というものがあるようで、たしかに独立させると後で気軽にダンプの設定変更しやすいと思った。<br>
 Dcokerfile-dbbackup-alpine:

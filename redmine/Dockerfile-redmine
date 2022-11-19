@@ -1,0 +1,11 @@
+FROM redmine:4.2.8
+
+# ホスト名/redmineでリクエストを受け付けるよう環境変数を設定
+# https://www.redmine.org/projects/redmine/wiki/HowTo_Install_Redmine_in_a_sub-URI
+ENV RAILS_RELATIVE_URL_ROOT=/redmine
+
+# デフォルトで存在するconfig.ruを念の為バックアップで残しておく
+RUN mv /usr/src/redmine/config.ru /usr/src/redmine/config.ru.bak
+
+# サブディレクトリを有効にするコマンドを追加したconfig.ruをホストからredmineのインストールディレクトリにコピー
+COPY ./config.ru/config.ru /usr/src/redmine

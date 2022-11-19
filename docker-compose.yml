@@ -2,14 +2,21 @@ version: '3.1'
 
 services:
 
+  nginx:
+    image: nginx:1.23.2
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - redmine
+
   redmine:
     build:
       context: ./redmine
       dockerfile: Dockerfile-redmine
     image: redmine-4.2.8
     container_name: redmine-4.2.8
-    ports:
-      - 3000:3000
     restart: always
     volumes:
       - ./redmine/plugins:/usr/src/redmine/plugins

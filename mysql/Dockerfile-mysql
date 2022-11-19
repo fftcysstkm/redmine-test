@@ -1,0 +1,7 @@
+# redmineで指定のバージョン(aptで使用したいのでdebianを指定、デフォルトはoracle linuxらしい)
+FROM  mysql:5.7-debian
+
+# vimとpsコマンドをインストール
+RUN apt-get update && apt-get install -y \
+    procps \
+    vim

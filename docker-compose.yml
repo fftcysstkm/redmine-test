@@ -2,11 +2,21 @@ version: '3.1'
 
 services:
 
-  redmine:
-    image: redmine:4.2.8
-    container_name: redmine-4.2.8
+  nginx:
+    image: nginx:1.23.2
     ports:
-      - 3000:3000
+      - 80:80
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - redmine
+
+  redmine:
+    build:
+      context: ./redmine
+      dockerfile: Dockerfile-redmine
+    image: redmine-4.2.8
+    container_name: redmine-4.2.8
     restart: always
     volumes:
       - ./redmine/plugins:/usr/src/redmine/plugins
@@ -20,7 +30,7 @@ services:
   db:
     build:
       context: ./mysql
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-mysql
     container_name: redmine-db
     ports:
       - 3306:3306
@@ -35,8 +45,11 @@ services:
       TZ: Asia/Tokyo
 
   periodic-backup:
-    build: ./periodic-backup
-    container_name: database-backup
+    build:
+      context: ./periodic-backup
+      dockerfile: Dockerfile-dbbackup-alpine
+    image: alpine-for-dbbackup
+    container_name: alpine-for-dbbackup
     platform: linux/amd64
     environment:
       MYSQL_CONTAINER_NAME: redmine-db
